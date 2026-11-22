@@ -9,13 +9,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#ffffff; --surface:#f4f7fc; --ink:#142036; --muted:#52627c; --line:#d6deeb;
-  --lichen:#3a5fae; --ember:#b8651d; --ember-ink:#fff;
+  --bg:#0c1426; --surface:#141f38; --ink:#e2e9f7; --muted:#8fa2c4; --line:#253556;
+  --lichen:#7ea6f2; --ember:#e08a3c; --ember-ink:#1a1208;
   --serif:"Fraunces",Georgia,"Times New Roman",serif;
   --sans:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
   box-sizing:border-box;
   padding-bottom:env(safe-area-inset-bottom,0px);
-  color-scheme:light;
+  color-scheme:dark;
 }
 @media not all{
   :root:not([data-theme="light"]){
@@ -35,10 +35,13 @@ a{color:var(--lichen)}
 .wrap{max-width:62rem;margin:0 auto;padding:0 1.25rem}
 
 /* Banner */
-.banner{position:relative;min-height:19rem;display:flex;align-items:flex-end;color:#fff;overflow:hidden;
+.banner{position:relative;min-height:22rem;display:flex;align-items:flex-end;color:#fff;overflow:hidden;
   padding-top:env(safe-area-inset-top,0px);background:#0a1226}
-.banner svg{position:absolute;inset:0;width:100%;height:100%}
-.banner::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(8,16,16,.78),rgba(8,16,16,.05) 65%)}
+.banner .bg div{position:absolute;inset:0;background-size:cover;opacity:0;transition:opacity .7s ease}
+.banner .bg div.on{opacity:1}
+.banner.still .bg div{transition:none}
+@media (prefers-reduced-motion:reduce){.banner .bg div{transition:none}}
+.banner::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(6,10,22,.85),rgba(6,10,22,.15) 60%,rgba(6,10,22,0))}
 .banner .wrap{position:relative;z-index:1;width:100%;padding-bottom:1.75rem;padding-top:5rem}
 .banner h1{font:600 clamp(3rem,10vw,5.5rem)/1 var(--serif);letter-spacing:-.02em;margin:0;text-shadow:0 2px 18px rgba(0,0,0,.5)}
 .banner p{margin:.35rem 0 0;font:500 clamp(1.05rem,3vw,1.4rem) var(--sans);opacity:.92;text-shadow:0 1px 10px rgba(0,0,0,.6)}
@@ -47,8 +50,15 @@ a{color:var(--lichen)}
 nav{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
 nav ul{list-style:none;margin:0 auto;padding:0 1.25rem;max-width:62rem;display:flex;gap:.25rem;overflow-x:auto}
 nav a{display:block;padding:.95rem 1rem;text-decoration:none;color:var(--muted);font-weight:600;border-bottom:3px solid transparent}
-nav a:hover{color:var(--ink)}
-nav a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--ember)}
+nav a{transition:color .25s,background .25s,border-color .25s,box-shadow .25s,text-shadow .25s}
+nav a:hover{color:var(--ink);border-bottom-color:rgba(224,138,60,.45);
+  background:linear-gradient(to top,rgba(255,150,60,.10),rgba(255,150,60,0) 80%)}
+/* Selected page glows like a lit rune switch */
+nav a[aria-current="page"]{color:#fff1d8;border-bottom-color:#f0a85c;
+  background:radial-gradient(120% 90% at 50% 100%,rgba(255,160,70,.48),rgba(255,140,50,.14) 55%,rgba(255,140,50,0) 80%);
+  box-shadow:0 8px 16px -8px rgba(255,150,60,.85);
+  text-shadow:0 0 10px rgba(255,180,100,.55)}
+@media (prefers-reduced-motion:reduce){nav a{transition:none}}
 
 /* Views */
 .view{display:none;padding:3rem 0 4rem}
@@ -62,10 +72,26 @@ h3{font:600 1.25rem/1.3 var(--serif);margin:0 0 .4rem}
 .field{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.7rem 1rem;display:flex;flex-direction:column}
 .field small{color:var(--muted);font-size:.85rem}
 .field code{font:600 1.2rem/1.35 ui-monospace,"Cascadia Mono",Consolas,monospace;word-break:break-all;user-select:all}
-.btn,button{display:inline-block;font:600 1rem var(--sans);cursor:pointer;border:0;border-radius:6px;padding:.8rem 1.4rem;
-  background:var(--ember);color:var(--ember-ink);text-decoration:none}
-.btn:hover,button:hover{filter:brightness(1.08)}
-.btn[aria-disabled="true"]{background:var(--line);color:var(--muted);cursor:not-allowed;filter:none}
+/* Rune switch buttons: a stone plate with a rune that lights up, like the vault switches in Enshrouded */
+.btn,button{position:relative;display:inline-flex;align-items:center;gap:.7rem;font:600 1rem var(--sans);cursor:pointer;
+  border-radius:7px;padding:.75rem 1.3rem .75rem .9rem;text-decoration:none;color:#f1dcb8;letter-spacing:.01em;
+  background:linear-gradient(180deg,#45423d 0%,#34322e 55%,#2a2825 100%);
+  border:1px solid #5d574d;
+  box-shadow:inset 0 1px 0 rgba(255,240,215,.12),inset 0 -3px 0 rgba(0,0,0,.35),0 2px 8px rgba(0,0,0,.45);
+  transition:box-shadow .25s,border-color .25s,color .25s}
+.btn::before,button::before{content:"";flex:none;width:1.7rem;height:1.7rem;border-radius:5px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='%23c9a47a' stroke-width='2' stroke-opacity='.45'%3E%3Cpath d='M7 11.5A4.5 4.5 0 0 1 11.5 7h9A4.5 4.5 0 0 1 25 11.5v9a4.5 4.5 0 0 1-4.5 4.5h-9A4.5 4.5 0 0 1 7 20.5z'/%3E%3Ccircle cx='16' cy='16' r='5.5'/%3E%3Ccircle cx='16' cy='16' r='2.2' fill='%23c9a47a' fill-opacity='.45'/%3E%3Ccircle cx='7.5' cy='7.5' r='3.2'/%3E%3Ccircle cx='24.5' cy='7.5' r='3.2'/%3E%3Ccircle cx='7.5' cy='24.5' r='3.2'/%3E%3Ccircle cx='24.5' cy='24.5' r='3.2'/%3E%3C/svg%3E") center/80% no-repeat,radial-gradient(circle,#2b241c 0%,#1d1915 100%);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.5),inset 0 1px 2px rgba(0,0,0,.6);transition:background .25s,filter .25s}
+.btn:hover,button:hover,.btn:focus-visible,button:focus-visible,.btn.lit,button.lit{color:#fff1d8;border-color:#a8743d;
+  box-shadow:inset 0 1px 0 rgba(255,240,215,.16),inset 0 -3px 0 rgba(0,0,0,.35),0 2px 8px rgba(0,0,0,.45),0 0 18px rgba(255,150,60,.28)}
+.btn:hover::before,button:hover::before,.btn:focus-visible::before,button:focus-visible::before,.btn.lit::before,button.lit::before{
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='%23ffd9a0' stroke-width='2' stroke-opacity='1'%3E%3Cpath d='M7 11.5A4.5 4.5 0 0 1 11.5 7h9A4.5 4.5 0 0 1 25 11.5v9a4.5 4.5 0 0 1-4.5 4.5h-9A4.5 4.5 0 0 1 7 20.5z'/%3E%3Ccircle cx='16' cy='16' r='5.5'/%3E%3Ccircle cx='16' cy='16' r='2.2' fill='%23ffd9a0' fill-opacity='1'/%3E%3Ccircle cx='7.5' cy='7.5' r='3.2'/%3E%3Ccircle cx='24.5' cy='7.5' r='3.2'/%3E%3Ccircle cx='7.5' cy='24.5' r='3.2'/%3E%3Ccircle cx='24.5' cy='24.5' r='3.2'/%3E%3C/svg%3E") center/80% no-repeat,radial-gradient(circle,#6b3c14 0%,#2a1d12 70%);
+  filter:drop-shadow(0 0 4px rgba(255,170,80,.9))}
+button.lit::before{filter:drop-shadow(0 0 7px rgba(255,190,110,1))}
+.btn:active,button:active{transform:translateY(1px);box-shadow:inset 0 2px 4px rgba(0,0,0,.5),0 0 14px rgba(255,150,60,.25)}
+@media (prefers-reduced-motion:reduce){.btn,button,.btn::before,button::before{transition:none}}
+.btn[aria-disabled="true"]{color:var(--muted);cursor:not-allowed;border-color:var(--line);box-shadow:none}
+.btn[aria-disabled="true"]::before{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='%23c9a47a' stroke-width='2' stroke-opacity='.45'%3E%3Cpath d='M7 11.5A4.5 4.5 0 0 1 11.5 7h9A4.5 4.5 0 0 1 25 11.5v9a4.5 4.5 0 0 1-4.5 4.5h-9A4.5 4.5 0 0 1 7 20.5z'/%3E%3Ccircle cx='16' cy='16' r='5.5'/%3E%3Ccircle cx='16' cy='16' r='2.2' fill='%23c9a47a' fill-opacity='.45'/%3E%3Ccircle cx='7.5' cy='7.5' r='3.2'/%3E%3Ccircle cx='24.5' cy='7.5' r='3.2'/%3E%3Ccircle cx='7.5' cy='24.5' r='3.2'/%3E%3Ccircle cx='24.5' cy='24.5' r='3.2'/%3E%3C/svg%3E") center/80% no-repeat,#1d1915;filter:none}
 .note{color:var(--muted);font-size:.95rem;margin:.5rem 0 0}
 
 ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:1.1rem;counter-reset:s}
@@ -92,49 +118,36 @@ ul.rules li::before{content:"";position:absolute;left:0;top:.7em;width:.55rem;he
 .modlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(16rem,1fr));gap:1rem}
 .mod{padding:1rem 1.1rem;border-left:3px solid var(--lichen);background:var(--surface)}
 .mod b{display:block;font-family:var(--serif);font-size:1.1rem}
+.mod b a{color:var(--ink);text-decoration-color:var(--lichen);text-underline-offset:.2em}
+.mod b a:hover{color:var(--lichen)}
+.mod b a::after{content:" \2197";font-family:var(--sans);font-size:.85em;color:var(--lichen)}
 .mod span{color:var(--muted);font-size:.95rem}
 .card code{font:600 1.7rem/1.2 ui-monospace,"Cascadia Mono",Consolas,monospace;letter-spacing:.08em;user-select:all;color:var(--ink)}
 .card button{align-self:flex-start;margin-top:auto}
 .shot{margin:1.75rem 0 0;max-width:46rem}
 .shot img{display:block;width:100%;height:auto;border-radius:6px;border:1px solid var(--line)}
 .shot figcaption{color:var(--muted);font-size:.95rem;margin-top:.6rem}
+/* Side art: a faded screenshot on the right of Home and About on wide screens */
+.view{position:relative}
+.view > *{position:relative;z-index:1}
+.view > .art{position:absolute;z-index:0;top:0;bottom:0;right:-1.25rem;width:min(62%,40rem);max-height:42rem;
+  background-size:cover;background-position:50% 50%;pointer-events:none;
+  --beam:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='.04' stop-color='%23fff' stop-opacity='0'/%3E%3Cstop offset='.2' stop-color='%23fff'/%3E%3Cstop offset='.6' stop-color='%23fff' stop-opacity='.8'/%3E%3Cstop offset='.9' stop-color='%23fff' stop-opacity='0'/%3E%3C/linearGradient%3E%3Cfilter id='b' x='-50%' y='-50%' width='200%' height='200%'%3E%3CfeGaussianBlur stdDeviation='4'/%3E%3C/filter%3E%3C/defs%3E%3Cpolygon points='64,-4 86,-4 76,104 12,104' fill='url(%23g)' filter='url(%23b)'/%3E%3C/svg%3E");
+  -webkit-mask-image:var(--beam);mask-image:var(--beam);
+  -webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+@media (max-width:56rem){.view > .art{display:none}}
 footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px solid var(--line)}
 </style>
 </head>
 <body>
 
-<header class="banner">
-  <svg viewBox="0 0 1200 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-    <defs>
-      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#0a1230"/><stop offset=".55" stop-color="#1d3a6b"/><stop offset="1" stop-color="#5a86b8"/>
-      </linearGradient>
-      <radialGradient id="flame" cx=".5" cy=".5" r=".5">
-        <stop offset="0" stop-color="#ffd08a" stop-opacity=".95"/><stop offset=".35" stop-color="#f0892f" stop-opacity=".55"/><stop offset="1" stop-color="#f0892f" stop-opacity="0"/>
-      </radialGradient>
-      <linearGradient id="fog" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#bcd2f5" stop-opacity="0"/><stop offset="1" stop-color="#bcd2f5" stop-opacity=".5"/>
-      </linearGradient>
-      <g id="pine"><path d="M0 -60 L16 -28 H7 L22 4 H8 L26 40 H-26 L-8 4 H-22 L-7 -28 H-16 Z"/></g>
-    </defs>
-    <rect width="1200" height="380" fill="url(#sky)"/>
-    <circle cx="930" cy="85" r="34" fill="#e6efff" opacity=".9"/>
-    <circle cx="930" cy="85" r="90" fill="#8fb4ff" opacity=".14"/>
-    <path d="M0 250 L90 170 L170 230 L270 140 L380 235 L470 180 L560 245 L660 150 L760 240 L860 185 L960 250 L1060 175 L1200 245 V380 H0Z" fill="#25416b"/>
-    <rect y="215" width="1200" height="90" fill="url(#fog)"/>
-    <path d="M0 290 Q150 245 320 285 T640 275 T960 290 T1200 270 V380 H0Z" fill="#162b4f"/>
-    <g fill="#0c1a33">
-      <use href="#pine" x="70" y="318"/><use href="#pine" x="150" y="330" transform="translate(0,-8)"/>
-      <use href="#pine" x="250" y="322"/><use href="#pine" x="990" y="320"/>
-      <use href="#pine" x="1080" y="332" transform="translate(0,-8)"/><use href="#pine" x="1160" y="318"/>
-    </g>
-    <circle cx="600" cy="268" r="70" fill="url(#flame)"/>
-    <path d="M580 300 L586 270 H614 L620 300Z" fill="#0c1716"/>
-    <path d="M600 232 C592 248 584 254 586 266 C588 274 612 274 614 266 C616 254 608 248 600 232Z" fill="#ffb25a"/>
-    <path d="M600 248 C596 256 593 260 595 266 C597 270 603 270 605 266 C607 260 604 256 600 248Z" fill="#fff0c8"/>
-    <path d="M0 305 Q300 270 600 300 T1200 290 V380 H0Z" fill="#09142a"/>
-    <rect y="270" width="1200" height="110" fill="url(#fog)"/>
-  </svg>
+<header class="banner still">
+  <div class="bg" aria-hidden="true">
+    <div data-v="home" style="background-image:url(img/keyart.jpg);background-position:50% 30%"></div>
+    <div data-v="downloads" style="background-image:url(img/ruins.jpg);background-position:50% 40%"></div>
+    <div data-v="mods" style="background-image:url(img/ambush.jpg);background-position:50% 35%"></div>
+    <div data-v="about" style="background-image:url(img/gate.jpg);background-position:50% 45%"></div>
+  </div>
   <div class="wrap">
     <h1 id="srvname">Beria</h1>
     <p>An Enshrouded dedicated server</p>
@@ -145,6 +158,7 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
   <ul>
     <li><a href="#home">Home</a></li>
     <li><a href="#downloads">Downloads</a></li>
+    <li><a href="#mods">Mods</a></li>
     <li><a href="#about">About</a></li>
   </ul>
 </nav>
@@ -152,6 +166,7 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
 <main class="wrap">
 
 <section class="view" id="v-home" aria-labelledby="h-home">
+  <div class="art" aria-hidden="true" style="background-image:url(img/hollow.jpg);background-position:45% 50%"></div>
   <h2 id="h-home">Join Beria</h2>
   <p class="sub">Install Kiln from the Downloads page, then connect with the details below.</p>
   <div class="join">
@@ -219,7 +234,14 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
   </div>
 </section>
 
+<section class="view" id="v-mods" aria-labelledby="h-mods">
+  <h2 id="h-mods">Mods</h2>
+  <p class="sub">The mods running on Beria. Entering the Beria code in Kiln installs them for you, so these links are just for reading up on what each one does.</p>
+  <div class="modlist" id="mods"></div>
+</section>
+
 <section class="view" id="v-about" aria-labelledby="h-about">
+  <div class="art" aria-hidden="true" style="background-image:url(img/risen.jpg);background-position:42% 50%"></div>
   <h2 id="h-about">About Beria</h2>
   <p class="sub">A private Enshrouded dedicated server running Kiln, so mods and permissions are managed on the server.</p>
   <h3>Rules</h3>
@@ -230,10 +252,6 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
     <li>Don’t share passwords outside the group.</li>
     <li>Report bugs and crashes instead of exploiting them.</li>
   </ul>
-  <div class="sec">
-    <h3>Mods on the server</h3>
-    <div class="modlist" id="mods"></div>
-  </div>
 </section>
 
 </main>
@@ -249,8 +267,12 @@ var CONFIG = {
   kilnUrl: "https://frostdev.io/kiln/download",     // link to the latest Kiln client build
   crucibleCode: "NWG8-SRMG",   // Crucible code for the mod pack
   mods: [
-    {n: "Kiln", d: "Mod loader and permissions system."},
-    {n: "Add your mod", d: "A one-line description of what it does."}
+    {n: "Kiln", d: "Mod loader and permissions system.", url: "https://frostdev.io/kiln/download"},
+    {n: "XHL-Kiln-Core", d: "Shared library the XHL mods below need. Keep it up to date.", url: "https://www.nexusmods.com/enshrouded/mods/377"},
+    {n: "Kiln Auto Loot", d: "Picks up nearby items, empties corpses and chests, harvests ripe crops, and breaks clutter in ruins.", url: "https://github.com/frostdev-ops/kiln-auto-loot"},
+    {n: "XHL Free Climbing", d: "Hold G to climb walls and rock faces. Climbing still uses stamina.", url: "https://www.nexusmods.com/enshrouded/mods/175"},
+    {n: "XHL Vein Mining", d: "Hold ~ while swinging a pickaxe to mine the whole vein of the same ore at once.", url: "https://www.nexusmods.com/enshrouded/mods/129"},
+    {n: "XHL Planting Assistant", d: "Plant a row, a square, or a whole field at once, and harvest nearby ripe crops together.", url: "https://www.nexusmods.com/enshrouded/mods/128"}
   ]
 };
 function $(id){ return document.getElementById(id); }
@@ -269,17 +291,25 @@ setLink("kilnlink", CONFIG.kilnUrl);
 var ml = $("mods");
 CONFIG.mods.forEach(function(x){
   var d = document.createElement("div"); d.className = "mod";
-  var b = document.createElement("b"); b.textContent = x.n;
+  var b = document.createElement("b");
+  if (x.url) {
+    var a = document.createElement("a");
+    a.href = x.url; a.target = "_blank"; a.rel = "noopener";
+    a.textContent = x.n; b.appendChild(a);
+  } else { b.textContent = x.n; }
   var s = document.createElement("span"); s.textContent = x.d;
   d.appendChild(b); d.appendChild(s); ml.appendChild(d);
 });
 
-var views = ["home","downloads","about"];
+var views = ["home","downloads","mods","about"];
 function route(){
   var h = (location.hash || "#home").slice(1);
   if (views.indexOf(h) < 0) h = "home";
   views.forEach(function(v){
     $("v-"+v).classList.toggle("on", v === h);
+  });
+  document.querySelectorAll(".banner .bg div").forEach(function(d){
+    d.classList.toggle("on", d.getAttribute("data-v") === h);
   });
   document.querySelectorAll("nav a").forEach(function(a){
     if (a.getAttribute("href") === "#"+h) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
@@ -288,10 +318,11 @@ function route(){
 }
 window.addEventListener("hashchange", route);
 route();
+setTimeout(function(){ document.querySelector(".banner").classList.remove("still"); }, 50);
 
 $("copycode").addEventListener("click", function(){
   var b = $("copycode");
-  function ok(){ b.textContent = "Code copied"; setTimeout(function(){ b.textContent = "Copy code"; }, 2000); }
+  function ok(){ b.textContent = "Code copied"; b.classList.add("lit"); setTimeout(function(){ b.textContent = "Copy code"; b.classList.remove("lit"); }, 2000); }
   function fail(){
     var r = document.createRange(); r.selectNodeContents($("crucible"));
     var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
@@ -302,7 +333,7 @@ $("copycode").addEventListener("click", function(){
 
 $("copy").addEventListener("click", function(){
   var msg = $("copymsg");
-  function ok(){ msg.textContent = "Address copied. Paste it into Direct Connect."; }
+  function ok(){ msg.textContent = "Address copied. Paste it into Direct Connect."; var c = $("copy"); c.classList.add("lit"); setTimeout(function(){ c.classList.remove("lit"); }, 2000); }
   function fail(){
     var r = document.createRange(); r.selectNodeContents($("addr"));
     var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
