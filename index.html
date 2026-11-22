@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Beria | Enshrouded Server</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --surface:#f4f7fc; --ink:#142036; --muted:#52627c; --line:#d6deeb;
+  --lichen:#3a5fae; --ember:#b8651d; --ember-ink:#fff;
+  --serif:"Fraunces",Georgia,"Times New Roman",serif;
+  --sans:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+  box-sizing:border-box;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media not all{
+  :root:not([data-theme="light"]){
+    --bg:#0c1426; --surface:#141f38; --ink:#e2e9f7; --muted:#8fa2c4; --line:#253556;
+    --lichen:#7ea6f2; --ember:#e08a3c; --ember-ink:#1a1208; color-scheme:dark;
+  }
+}
+:root[data-never]{
+  --bg:#0c1426; --surface:#141f38; --ink:#e2e9f7; --muted:#8fa2c4; --line:#253556;
+  --lichen:#7ea6f2; --ember:#e08a3c; --ember-ink:#1a1208; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1.0625rem/1.6 var(--sans)}
+a{color:var(--lichen)}
+:focus-visible{outline:3px solid var(--ember);outline-offset:3px}
+.wrap{max-width:62rem;margin:0 auto;padding:0 1.25rem}
+
+/* Banner */
+.banner{position:relative;min-height:19rem;display:flex;align-items:flex-end;color:#fff;overflow:hidden;
+  padding-top:env(safe-area-inset-top,0px);background:#0a1226}
+.banner svg{position:absolute;inset:0;width:100%;height:100%}
+.banner::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(8,16,16,.78),rgba(8,16,16,.05) 65%)}
+.banner .wrap{position:relative;z-index:1;width:100%;padding-bottom:1.75rem;padding-top:5rem}
+.banner h1{font:600 clamp(3rem,10vw,5.5rem)/1 var(--serif);letter-spacing:-.02em;margin:0;text-shadow:0 2px 18px rgba(0,0,0,.5)}
+.banner p{margin:.35rem 0 0;font:500 clamp(1.05rem,3vw,1.4rem) var(--sans);opacity:.92;text-shadow:0 1px 10px rgba(0,0,0,.6)}
+
+/* Nav */
+nav{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+nav ul{list-style:none;margin:0 auto;padding:0 1.25rem;max-width:62rem;display:flex;gap:.25rem;overflow-x:auto}
+nav a{display:block;padding:.95rem 1rem;text-decoration:none;color:var(--muted);font-weight:600;border-bottom:3px solid transparent}
+nav a:hover{color:var(--ink)}
+nav a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--ember)}
+
+/* Views */
+.view{display:none;padding:3rem 0 4rem}
+.view.on{display:block}
+h2{font:600 1.9rem/1.2 var(--serif);margin:0 0 .5rem;letter-spacing:-.01em}
+h3{font:600 1.25rem/1.3 var(--serif);margin:0 0 .4rem}
+.sub{color:var(--muted);margin:0 0 1.75rem;max-width:36rem}
+.sec{margin-top:3rem}
+
+.join{display:grid;gap:.75rem;max-width:36rem}
+.field{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.7rem 1rem;display:flex;flex-direction:column}
+.field small{color:var(--muted);font-size:.85rem}
+.field code{font:600 1.2rem/1.35 ui-monospace,"Cascadia Mono",Consolas,monospace;word-break:break-all;user-select:all}
+.btn,button{display:inline-block;font:600 1rem var(--sans);cursor:pointer;border:0;border-radius:6px;padding:.8rem 1.4rem;
+  background:var(--ember);color:var(--ember-ink);text-decoration:none}
+.btn:hover,button:hover{filter:brightness(1.08)}
+.btn[aria-disabled="true"]{background:var(--line);color:var(--muted);cursor:not-allowed;filter:none}
+.note{color:var(--muted);font-size:.95rem;margin:.5rem 0 0}
+
+ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:1.1rem;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:2.5rem 1fr;gap:1rem;align-items:start}
+ol.steps li::before{content:counter(s);font:600 1.3rem/1 var(--serif);color:var(--lichen);border:1.5px solid var(--lichen);
+  border-radius:50%;width:2.5rem;height:2.5rem;display:grid;place-items:center}
+ol.steps strong{display:block}
+ol.steps span{color:var(--muted)}
+
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:34rem;font-size:.98rem}
+th,td{padding:.7rem 1rem;text-align:left;border-bottom:1px solid var(--line)}
+tr:last-child th,tr:last-child td{border-bottom:0}
+td.y{color:var(--lichen);font-weight:600} td.n{color:var(--muted)}
+
+.dl{display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--lichen);border-radius:6px;padding:1.4rem;display:flex;flex-direction:column;gap:.75rem}
+.card p{margin:0;color:var(--muted)}
+.card .btn{align-self:flex-start;margin-top:auto}
+
+ul.rules{margin:0;padding:0;list-style:none;display:grid;gap:.7rem}
+ul.rules li{padding-left:1.4rem;position:relative}
+ul.rules li::before{content:"";position:absolute;left:0;top:.7em;width:.55rem;height:.55rem;background:var(--ember);border-radius:50%}
+.modlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(16rem,1fr));gap:1rem}
+.mod{padding:1rem 1.1rem;border-left:3px solid var(--lichen);background:var(--surface)}
+.mod b{display:block;font-family:var(--serif);font-size:1.1rem}
+.mod span{color:var(--muted);font-size:.95rem}
+footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+
+<header class="banner">
+  <svg viewBox="0 0 1200 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#0a1230"/><stop offset=".55" stop-color="#1d3a6b"/><stop offset="1" stop-color="#5a86b8"/>
+      </linearGradient>
+      <radialGradient id="flame" cx=".5" cy=".5" r=".5">
+        <stop offset="0" stop-color="#ffd08a" stop-opacity=".95"/><stop offset=".35" stop-color="#f0892f" stop-opacity=".55"/><stop offset="1" stop-color="#f0892f" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="fog" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#bcd2f5" stop-opacity="0"/><stop offset="1" stop-color="#bcd2f5" stop-opacity=".5"/>
+      </linearGradient>
+      <g id="pine"><path d="M0 -60 L16 -28 H7 L22 4 H8 L26 40 H-26 L-8 4 H-22 L-7 -28 H-16 Z"/></g>
+    </defs>
+    <rect width="1200" height="380" fill="url(#sky)"/>
+    <circle cx="930" cy="85" r="34" fill="#e6efff" opacity=".9"/>
+    <circle cx="930" cy="85" r="90" fill="#8fb4ff" opacity=".14"/>
+    <path d="M0 250 L90 170 L170 230 L270 140 L380 235 L470 180 L560 245 L660 150 L760 240 L860 185 L960 250 L1060 175 L1200 245 V380 H0Z" fill="#25416b"/>
+    <rect y="215" width="1200" height="90" fill="url(#fog)"/>
+    <path d="M0 290 Q150 245 320 285 T640 275 T960 290 T1200 270 V380 H0Z" fill="#162b4f"/>
+    <g fill="#0c1a33">
+      <use href="#pine" x="70" y="318"/><use href="#pine" x="150" y="330" transform="translate(0,-8)"/>
+      <use href="#pine" x="250" y="322"/><use href="#pine" x="990" y="320"/>
+      <use href="#pine" x="1080" y="332" transform="translate(0,-8)"/><use href="#pine" x="1160" y="318"/>
+    </g>
+    <circle cx="600" cy="268" r="70" fill="url(#flame)"/>
+    <path d="M580 300 L586 270 H614 L620 300Z" fill="#0c1716"/>
+    <path d="M600 232 C592 248 584 254 586 266 C588 274 612 274 614 266 C616 254 608 248 600 232Z" fill="#ffb25a"/>
+    <path d="M600 248 C596 256 593 260 595 266 C597 270 603 270 605 266 C607 260 604 256 600 248Z" fill="#fff0c8"/>
+    <path d="M0 305 Q300 270 600 300 T1200 290 V380 H0Z" fill="#09142a"/>
+    <rect y="270" width="1200" height="110" fill="url(#fog)"/>
+  </svg>
+  <div class="wrap">
+    <h1 id="srvname">Beria</h1>
+    <p>An Enshrouded dedicated server</p>
+  </div>
+</header>
+
+<nav aria-label="Main">
+  <ul>
+    <li><a href="#home">Home</a></li>
+    <li><a href="#downloads">Downloads</a></li>
+    <li><a href="#about">About</a></li>
+  </ul>
+</nav>
+
+<main class="wrap">
+
+<section class="view" id="v-home" aria-labelledby="h-home">
+  <h2 id="h-home">Join Beria</h2>
+  <p class="sub">Install the mods first on the Downloads page, then connect with the details below.</p>
+  <div class="join">
+    <div class="field"><small>Server address</small><code id="addr"></code></div>
+    <div class="field"><small>Guest password</small><code id="pw"></code></div>
+    <div><button id="copy" type="button">Copy address</button></div>
+    <p class="note" id="copymsg" role="status">Friends and admins have their own passwords. Ask the host.</p>
+  </div>
+
+  <div class="sec">
+    <h2>How to join</h2>
+    <ol class="steps">
+      <li><div><strong>Download the mods and Kiln</strong><span>Both are on the <a href="#downloads">Downloads</a> page.</span></div></li>
+      <li><div><strong>Open Enshrouded and choose Join Game</strong><span>Pick Direct Connect and paste the server address.</span></div></li>
+      <li><div><strong>Enter your password</strong><span>Your password decides your role in the world.</span></div></li>
+    </ol>
+  </div>
+
+  <div class="sec">
+    <h2>Roles</h2>
+    <p class="sub">What each password lets you do.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Role</th><th>Edit world</th><th>Edit base</th><th>Extend base</th><th>Open inventories</th><th>Kick and ban</th></tr></thead>
+      <tbody>
+        <tr><th>Admin</th><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td></tr>
+        <tr><th>Friend</th><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">No</td></tr>
+        <tr><th>Guest</th><td class="y">Yes</td><td class="y">Yes</td><td class="n">No</td><td class="n">No</td><td class="n">No</td></tr>
+        <tr><th>Visitor</th><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td></tr>
+      </tbody></table></div>
+  </div>
+</section>
+
+<section class="view" id="v-downloads" aria-labelledby="h-dl">
+  <h2 id="h-dl">Downloads</h2>
+  <p class="sub">You need both to play on Beria: Kiln loads the mods, and the mod pack contains them.</p>
+  <div class="dl">
+    <div class="card">
+      <h3>Beria mod pack</h3>
+      <p id="modver">Every mod enabled on the server, in one zip file.</p>
+      <a class="btn" id="modlink" target="_blank" rel="noopener">Download mod pack (.zip)</a>
+    </div>
+    <div class="card">
+      <h3>Kiln for players</h3>
+      <p>The latest Kiln build for the game client. This is not the server version.</p>
+      <a class="btn" id="kilnlink" target="_blank" rel="noopener">Download latest Kiln</a>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>Install</h2>
+    <ol class="steps">
+      <li><div><strong>Close Enshrouded</strong><span>Install while the game is not running.</span></div></li>
+      <li><div><strong>Install Kiln</strong><span>Extract the Kiln download into your Enshrouded game folder. In Steam, right-click the game, choose Manage, then Browse local files.</span></div></li>
+      <li><div><strong>Add the mod pack</strong><span>Extract the zip into the mods folder that Kiln uses, so each mod keeps its own folder.</span></div></li>
+      <li><div><strong>Launch and join</strong><span>Start the game and connect from the <a href="#home">Home</a> page details.</span></div></li>
+    </ol>
+  </div>
+</section>
+
+<section class="view" id="v-about" aria-labelledby="h-about">
+  <h2 id="h-about">About Beria</h2>
+  <p class="sub">A private Enshrouded dedicated server running Kiln, so mods and permissions are managed on the server.</p>
+  <h3>Rules</h3>
+  <ul class="rules">
+    <li>Be respectful in chat and in voice.</li>
+    <li>Don’t grief or destroy other players’ builds.</li>
+    <li>Ask before building close to someone else’s base.</li>
+    <li>Don’t share passwords outside the group.</li>
+    <li>Report bugs and crashes instead of exploiting them.</li>
+  </ul>
+  <div class="sec">
+    <h3>Mods on the server</h3>
+    <div class="modlist" id="mods"></div>
+  </div>
+</section>
+
+<section class="view" id="v-contact" aria-labelledby="h-contact">
+  <h2 id="h-contact">Contact</h2>
+  <p class="sub">Need a role upgrade, found a bug, or can’t connect? Reach the host here.</p>
+  <div class="join">
+    <div class="field"><small>Discord</small><code id="c-discord"></code></div>
+    <div class="field"><small>Email</small><code id="c-email"></code></div>
+  </div>
+</section>
+
+</main>
+
+<footer><div class="wrap">Beria is a private fan-run server and is not affiliated with Keen Games.</div></footer>
+
+<script>
+// Edit these values to personalise the page.
+var CONFIG = {
+  name: "Beria",
+  address: "142.181.47.14:15637",
+  guestPassword: "testingtttt",
+  modZipUrl: "https://drive.google.com/file/d/1ZZnRRGb-NFBY6pOdUvjIFwUZg97IBW7U/view?usp=sharing",   // link to your mod pack zip
+  kilnUrl: "https://frostdev.io/kiln/download",     // link to the latest Kiln client build
+  discord: "405067169504821248",   // Discord user ID
+  email: "Add your email",
+  mods: [
+    {n: "Kiln", d: "Mod loader and permissions system."},
+    {n: "Add your mod", d: "A one-line description of what it does."}
+  ]
+};
+function $(id){ return document.getElementById(id); }
+document.title = CONFIG.name + " | Enshrouded Server";
+$("srvname").textContent = CONFIG.name;
+$("addr").textContent = CONFIG.address;
+$("pw").textContent = CONFIG.guestPassword;
+var dl = document.createElement("a");
+dl.href = "https://discord.com/users/" + CONFIG.discord;
+dl.target = "_blank"; dl.rel = "noopener";
+dl.textContent = "Open the host’s Discord profile";
+$("c-discord").appendChild(dl);
+$("c-email").textContent = CONFIG.email;
+function setLink(id, url){
+  var a = $(id);
+  if (url) { a.href = url; a.removeAttribute("aria-disabled"); }
+  else { a.setAttribute("aria-disabled","true"); a.textContent = "Link coming soon"; a.addEventListener("click", function(e){ e.preventDefault(); }); }
+}
+setLink("modlink", CONFIG.modZipUrl);
+setLink("kilnlink", CONFIG.kilnUrl);
+var ml = $("mods");
+CONFIG.mods.forEach(function(x){
+  var d = document.createElement("div"); d.className = "mod";
+  var b = document.createElement("b"); b.textContent = x.n;
+  var s = document.createElement("span"); s.textContent = x.d;
+  d.appendChild(b); d.appendChild(s); ml.appendChild(d);
+});
+
+var views = ["home","downloads","about"]; // add "contact" back here and in the nav to re-enable that page
+function route(){
+  var h = (location.hash || "#home").slice(1);
+  if (views.indexOf(h) < 0) h = "home";
+  views.forEach(function(v){
+    $("v-"+v).classList.toggle("on", v === h);
+  });
+  document.querySelectorAll("nav a").forEach(function(a){
+    if (a.getAttribute("href") === "#"+h) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
+  });
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", route);
+route();
+
+$("copy").addEventListener("click", function(){
+  var msg = $("copymsg");
+  function ok(){ msg.textContent = "Address copied. Paste it into Direct Connect."; }
+  function fail(){
+    var r = document.createRange(); r.selectNodeContents($("addr"));
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    msg.textContent = "Address selected. Press Ctrl+C to copy it.";
+  }
+  try { navigator.clipboard.writeText(CONFIG.address).then(ok, fail); } catch(e){ fail(); }
+});
+</script>
+</body>
+</html>
