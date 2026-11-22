@@ -81,7 +81,7 @@ th,td{padding:.7rem 1rem;text-align:left;border-bottom:1px solid var(--line)}
 tr:last-child th,tr:last-child td{border-bottom:0}
 td.y{color:var(--lichen);font-weight:600} td.n{color:var(--muted)}
 
-.dl{display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr))}
+.dl{display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fill,minmax(18rem,26rem))}
 .card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--lichen);border-radius:6px;padding:1.4rem;display:flex;flex-direction:column;gap:.75rem}
 .card p{margin:0;color:var(--muted)}
 .card .btn{align-self:flex-start;margin-top:auto}
@@ -148,7 +148,7 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
 
 <section class="view" id="v-home" aria-labelledby="h-home">
   <h2 id="h-home">Join Beria</h2>
-  <p class="sub">Install the mods first on the Downloads page, then connect with the details below.</p>
+  <p class="sub">Install Kiln from the Downloads page, then connect with the details below.</p>
   <div class="join">
     <div class="field"><small>Server address</small><code id="addr"></code></div>
     <div class="field"><small>Guest password</small><code id="pw"></code></div>
@@ -159,8 +159,9 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
   <div class="sec">
     <h2>How to join</h2>
     <ol class="steps">
-      <li><div><strong>Download the mods and Kiln</strong><span>Both are on the <a href="#downloads">Downloads</a> page.</span></div></li>
-      <li><div><strong>Open Enshrouded and choose Join Game</strong><span>Pick Direct Connect and paste the server address.</span></div></li>
+      <li><div><strong>Install Kiln</strong><span>Get the launcher from the <a href="#downloads">Downloads</a> page.</span></div></li>
+      <li><div><strong>Start the game from Kiln</strong><span>Kiln installs the Beria mod pack for you. Starting from Steam works too, but Kiln is recommended.</span></div></li>
+      <li><div><strong>Choose Join Game</strong><span>Pick Direct Connect and paste the server address.</span></div></li>
       <li><div><strong>Enter your password</strong><span>Your password decides your role in the world.</span></div></li>
     </ol>
   </div>
@@ -181,13 +182,8 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
 
 <section class="view" id="v-downloads" aria-labelledby="h-dl">
   <h2 id="h-dl">Downloads</h2>
-  <p class="sub">You need both to play on Beria: Kiln loads the mods, and the mod pack contains them.</p>
+  <p class="sub">Kiln is all you need to play on Beria. It installs the server’s mods for you.</p>
   <div class="dl">
-    <div class="card">
-      <h3>Beria mod pack</h3>
-      <p id="modver">Every mod enabled on the server, in one zip file.</p>
-      <a class="btn" id="modlink" target="_blank" rel="noopener">Download mod pack (.zip)</a>
-    </div>
     <div class="card">
       <h3>Kiln for players</h3>
       <p>The latest Kiln build for the game client. This is not the server version.</p>
@@ -198,10 +194,10 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
   <div class="sec">
     <h2>Install</h2>
     <ol class="steps">
-      <li><div><strong>Close Enshrouded</strong><span>Install while the game is not running.</span></div></li>
-      <li><div><strong>Install Kiln</strong><span>Extract the Kiln download into your Enshrouded game folder. In Steam, right-click the game, choose Manage, then Browse local files.</span></div></li>
-      <li><div><strong>Add the mod pack</strong><span>Extract the zip into the mods folder that Kiln uses, so each mod keeps its own folder.</span></div></li>
-      <li><div><strong>Launch and join</strong><span>Start the game and connect from the <a href="#home">Home</a> page details.</span></div></li>
+      <li><div><strong>Download Kiln</strong><span>Use the button above to get the latest launcher.</span></div></li>
+      <li><div><strong>Install it anywhere</strong><span>Kiln doesn’t need to go in the game folder. Put it wherever you like.</span></div></li>
+      <li><div><strong>Let Kiln install the mods</strong><span>The Beria mod pack is published through Kiln, so it downloads and installs automatically.</span></div></li>
+      <li><div><strong>Launch and join</strong><span>Start the game from Kiln (recommended) or from Steam, then connect with the <a href="#home">Home</a> page details.</span></div></li>
     </ol>
   </div>
 </section>
@@ -241,10 +237,9 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
 var CONFIG = {
   name: "Beria",
   address: "142.181.47.14:15637",
-  guestPassword: "Beria",
-  modZipUrl: "https://drive.google.com/file/d/1ZZnRRGb-NFBY6pOdUvjIFwUZg97IBW7U/view?usp=sharing",   // link to your mod pack zip
+  guestPassword: "beria",
   kilnUrl: "https://frostdev.io/kiln/download",     // link to the latest Kiln client build
-  discord: "user id",   // Discord user ID
+  discord: "405067169504821248",   // Discord user ID
   email: "Add your email",
   mods: [
     {n: "Kiln", d: "Mod loader and permissions system."},
@@ -267,7 +262,6 @@ function setLink(id, url){
   if (url) { a.href = url; a.removeAttribute("aria-disabled"); }
   else { a.setAttribute("aria-disabled","true"); a.textContent = "Link coming soon"; a.addEventListener("click", function(e){ e.preventDefault(); }); }
 }
-setLink("modlink", CONFIG.modZipUrl);
 setLink("kilnlink", CONFIG.kilnUrl);
 var ml = $("mods");
 CONFIG.mods.forEach(function(x){
