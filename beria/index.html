@@ -45,6 +45,17 @@ a{color:var(--lichen)}
 .banner .wrap{position:relative;z-index:1;width:100%;padding-bottom:1.75rem;padding-top:5rem}
 .banner h1{font:600 clamp(3rem,10vw,5.5rem)/1 var(--serif);letter-spacing:-.02em;margin:0;text-shadow:0 2px 18px rgba(0,0,0,.5)}
 .banner p{margin:.35rem 0 0;font:500 clamp(1.05rem,3vw,1.4rem) var(--sans);opacity:.92;text-shadow:0 1px 10px rgba(0,0,0,.6)}
+/* Live server status badge */
+.banner p.status{display:inline-flex;align-items:center;gap:.55rem;margin-top:.9rem;padding:.38rem .9rem .38rem .75rem;
+  border-radius:999px;background:rgba(6,10,22,.6);border:1px solid rgba(255,255,255,.16);
+  font:600 .95rem/1.2 var(--sans);opacity:1;text-shadow:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.status .dot{width:.6rem;height:.6rem;border-radius:50%;background:#8fa2c4;flex:none}
+.status[data-state="online"] .dot{background:#5fd38a;box-shadow:0 0 0 0 rgba(95,211,138,.6);animation:pulse 2.4s infinite}
+.status[data-state="online"]{border-color:rgba(95,211,138,.45)}
+.status[data-state="offline"] .dot{background:#e0685a}
+.status[data-state="offline"]{border-color:rgba(224,104,90,.45)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(95,211,138,.6)}70%{box-shadow:0 0 0 .5rem rgba(95,211,138,0)}100%{box-shadow:0 0 0 0 rgba(95,211,138,0)}}
+@media (prefers-reduced-motion:reduce){.status .dot{animation:none!important}}
 
 /* Nav */
 nav{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
@@ -154,6 +165,7 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
   <div class="wrap">
     <h1 id="srvname">Beria</h1>
     <p>An Enshrouded dedicated server</p>
+    <p class="status" id="status" data-state="checking" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="status-text">Checking server…</span></p>
   </div>
 </header>
 
@@ -329,6 +341,26 @@ function route(){
 window.addEventListener("hashchange", route);
 route();
 setTimeout(function(){ document.querySelector(".banner").classList.remove("still"); }, 50);
+
+// Live server status, from /api/status (asks Steam, cached for a minute)
+function showStatus(d){
+  var el = $("status"), t = $("status-text");
+  if (d && d.online === true) {
+    el.setAttribute("data-state","online");
+    t.textContent = (d.players != null && d.maxPlayers) ? "Online · " + d.players + "/" + d.maxPlayers + " players" : "Online";
+  } else if (d && d.online === false) {
+    el.setAttribute("data-state","offline"); t.textContent = "Offline";
+  } else {
+    el.setAttribute("data-state","unknown"); t.textContent = "Status unavailable";
+  }
+}
+function loadStatus(){
+  fetch("/api/status", {cache:"no-store"})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(showStatus, function(){ showStatus(null); });
+}
+loadStatus();
+setInterval(function(){ if (!document.hidden) loadStatus(); }, 60000);
 
 $("copycode").addEventListener("click", function(){
   var b = $("copycode");
