@@ -356,6 +356,7 @@ var CONFIG = {
   mods: [
     {n: "Kiln", d: "Mod loader and permissions system.", url: "https://frostdev.io/kiln/download"},
     {n: "XHL-Kiln-Core", d: "Shared library the XHL mods below need. Keep it up to date.", url: "https://www.nexusmods.com/enshrouded/mods/377"},
+    {n: "Busy Hands", d: "Part of the Beria mod pack. See its Nexus page for what it does.", url: "https://www.nexusmods.com/enshrouded/mods/369"},
     {n: "Kiln Auto Loot", d: "Picks up nearby items, empties corpses and chests, harvests ripe crops, and breaks clutter in ruins.", url: "https://github.com/frostdev-ops/kiln-auto-loot"},
     {n: "XHL Free Climbing", d: "Hold G to climb walls and rock faces. Climbing still uses stamina.", url: "https://www.nexusmods.com/enshrouded/mods/175"},
     {n: "XHL Vein Mining", d: "Hold ~ while swinging a pickaxe to mine the whole vein of the same ore at once.", url: "https://www.nexusmods.com/enshrouded/mods/129"},
@@ -440,7 +441,8 @@ function ago(iso){
 }
 function showUptime(d){
   var box = $("uptime");
-  if (!d || !d.history24h || !d.samples24h) { box.hidden = true; return; }
+  // Show the bar as soon as history is available, even before the first saved check
+  if (!d || !d.history24h) { box.hidden = true; return; }
   var bar = $("uptime-bar"); bar.textContent = "";
   d.history24h.forEach(function(v){
     var i = document.createElement("i");
