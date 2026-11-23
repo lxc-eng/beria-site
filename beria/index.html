@@ -82,6 +82,15 @@ ul.news{list-style:none;margin:0;padding:0;display:grid;gap:.8rem}
 ul.news li{display:grid;gap:.15rem;padding-bottom:.8rem;border-bottom:1px solid var(--line);font-size:.93rem;line-height:1.45}
 ul.news li:last-child{border-bottom:0;padding-bottom:0}
 ul.news time{color:var(--ember);font-weight:600;font-size:.85rem;letter-spacing:.02em}
+.newsbar{max-height:calc(100vh - 6rem);overflow-y:auto}
+.newsbar[hidden]{display:none!important}
+.playing{display:flex;align-items:center;gap:.55rem;margin:0 0 1rem;font-size:.93rem;color:var(--ink)}
+.playing[hidden]{display:none}
+.playing b{color:#ffd9a0}
+.flame{width:.55rem;height:.55rem;border-radius:50%;background:#e08a3c;box-shadow:0 0 8px 2px rgba(255,150,60,.6);flex:none}
+ul.news a{color:var(--ink);text-decoration-color:rgba(126,166,242,.5);text-underline-offset:.15em}
+ul.news a:hover{color:var(--lichen)}
+ul.news a[target]::after{content:" \2197";color:var(--lichen);font-size:.85em}
 /* Not enough margin: show What's new under the Home page instead */
 @media (max-width:95.99rem){
   .newsbar{grid-column:2;position:static;margin:0 1.25rem 3rem;max-width:40rem}
@@ -241,6 +250,7 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
     <div class="field"><small>Guest password</small><code id="pw"></code></div>
     <div><button id="copy" type="button">Copy address</button></div>
     <p class="note" id="copymsg" role="status">Friends and admins have their own passwords. Ask the host.</p>
+    <p class="note" id="srvversion" hidden>The server is running game version <b id="srvver"></b>. If you get a version mismatch, update Enshrouded in Steam.</p>
   </div>
 
   <div class="sec">
@@ -331,9 +341,10 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
 
 </main>
 
-<aside class="newsbar" aria-labelledby="h-news">
-  <h2 id="h-news">What’s new</h2>
-  <ul class="news" id="news"></ul>
+<aside class="newsbar" id="game" aria-labelledby="h-news" hidden>
+  <h2 id="h-news">Enshrouded news</h2>
+  <p class="playing" id="playing" hidden><span class="flame" aria-hidden="true"></span><span id="playing-text"></span></p>
+  <ul class="news" id="game-news"></ul>
 </aside>
 </div>
 
@@ -347,12 +358,6 @@ var CONFIG = {
   guestPassword: "beria",
   kilnUrl: "https://frostdev.io/kiln/download",     // link to the latest Kiln client build
   crucibleCode: "NWG8-SRMG",   // Crucible code for the mod pack
-  // Newest first. Add a line here to post an update on the Home page.
-  news: [
-    {date: "2026-11-23", text: "The banner now shows whether Beria is online and how many players are on, plus a 24-hour uptime bar."},
-    {date: "2026-11-22", text: "Install guide now covers switching the mods on in Kiln: click All on after entering the code."},
-    {date: "2026-11-22", text: "New Mods page listing everything running on the server, with links."}
-  ],
   mods: [
     {n: "Kiln", d: "Mod loader and permissions system.", url: "https://frostdev.io/kiln/download"},
     {n: "XHL-Kiln-Core", d: "Shared library the XHL mods below need. Keep it up to date.", url: "https://www.nexusmods.com/enshrouded/mods/377"},
@@ -376,14 +381,6 @@ function setLink(id, url){
   else { a.setAttribute("aria-disabled","true"); a.textContent = "Link coming soon"; a.addEventListener("click", function(e){ e.preventDefault(); }); }
 }
 setLink("kilnlink", CONFIG.kilnUrl);
-var nl = $("news");
-CONFIG.news.forEach(function(x){
-  var li = document.createElement("li");
-  var t = document.createElement("time"); t.dateTime = x.date;
-  t.textContent = new Date(x.date + "T12:00:00").toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"});
-  var p = document.createElement("span"); p.textContent = x.text;
-  li.appendChild(t); li.appendChild(p); nl.appendChild(li);
-});
 var ml = $("mods");
 CONFIG.mods.forEach(function(x){
   var d = document.createElement("div"); d.className = "mod";
@@ -423,6 +420,7 @@ function showStatus(d){
   if (d && d.online === true) {
     el.setAttribute("data-state","online");
     t.textContent = (d.players != null && d.maxPlayers) ? "Online · " + d.players + "/" + d.maxPlayers + " players" : "Online";
+    if (d.version) { $("srvver").textContent = d.version; $("srvversion").hidden = false; }
   } else if (d && d.online === false) {
     el.setAttribute("data-state","offline");
     t.textContent = d.lastSeenOnline ? "Offline · last seen " + ago(d.lastSeenOnline) : "Offline";
@@ -453,12 +451,36 @@ function showUptime(d){
   $("uptime-pct").textContent = d.samples24h < 12 ? "collecting…" : d.uptime24h + "%";
   box.hidden = false;
 }
+function loadGame(){
+  fetch("/api/game").then(function(r){ return r.ok ? r.json() : null; }).then(showGame, function(){});
+}
+function showGame(d){
+  if (!d) return;
+  var any = false;
+  if (typeof d.playingNow === "number") {
+    $("playing-text").innerHTML = "";
+    var b = document.createElement("b"); b.textContent = d.playingNow.toLocaleString();
+    $("playing-text").appendChild(b);
+    $("playing-text").appendChild(document.createTextNode(" people are playing Enshrouded right now"));
+    $("playing").hidden = false; any = true;
+  }
+  var ul = $("game-news"); ul.textContent = "";
+  (d.news || []).forEach(function(n){
+    var li = document.createElement("li");
+    var t = document.createElement("time"); t.dateTime = n.date;
+    t.textContent = new Date(n.date).toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"});
+    var a = document.createElement("a"); a.href = n.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = n.title;
+    li.appendChild(t); li.appendChild(a); ul.appendChild(li); any = true;
+  });
+  $("game").hidden = !any;
+}
 function loadStatus(){
   fetch("/api/status", {cache:"no-store"})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(showStatus, function(){ showStatus(null); });
 }
 loadStatus();
+loadGame();
 setInterval(function(){ if (!document.hidden) loadStatus(); }, 60000);
 
 $("copycode").addEventListener("click", function(){

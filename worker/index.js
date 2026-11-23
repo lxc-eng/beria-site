@@ -22,6 +22,7 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === "/api/status") return status(request, env, ctx);
+    if (url.pathname === "/api/game") return game(request, ctx);
     return env.ASSETS.fetch(request);
   },
 
@@ -103,6 +104,7 @@ async function withKey(key) {
     players: s.players ?? 0,
     maxPlayers: s.max_players ?? null,
     name: s.name ?? null,
+    version: s.version ?? null, // game version the server is running
   };
 }
 
@@ -157,4 +159,60 @@ async function historySummary(env, live) {
     samples24h: total,
     history24h,
   };
+}
+
+// ---------- Enshrouded news and global player count (no key needed) ----------
+//   GET /api/game  ->  { playingNow, news: [{ title, url, date }] }
+// Cached for 30 minutes: this changes slowly.
+
+const GAME_CACHE_SECONDS = 1800;
+
+async function game(request, ctx) {
+  const cache = caches.default;
+  const cacheKey = new Request(new URL("/api/game", request.url).toString());
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  const [playingNow, news] = await Promise.all([
+    playerCount().catch(() => null),
+    officialNews().catch(() => null),
+  ]);
+  const body = { playingNow, news, checkedAt: new Date().toISOString() };
+  const res = new Response(JSON.stringify(body), {
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": `public, max-age=${GAME_CACHE_SECONDS}`,
+    },
+  });
+  // Only keep a complete answer; retry sooner if Steam didn't answer
+  if (playingNow !== null && news !== null) ctx.waitUntil(cache.put(cacheKey, res.clone()));
+  return res;
+}
+
+async function playerCount() {
+  const api = new URL("https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/");
+  api.searchParams.set("appid", String(ENSHROUDED_APPID));
+  const r = await fetch(api, { headers: { accept: "application/json" } });
+  if (!r.ok) throw new Error(`Steam ${r.status}`);
+  const data = await r.json();
+  if (data?.response?.result !== 1) throw new Error("no count");
+  return data.response.player_count;
+}
+
+// Keen Games' official announcements (patch notes, updates) from Steam
+async function officialNews() {
+  const api = new URL("https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/");
+  api.searchParams.set("appid", String(ENSHROUDED_APPID));
+  api.searchParams.set("count", "5");
+  api.searchParams.set("maxlength", "1");
+  api.searchParams.set("feeds", "steam_community_announcements");
+  api.searchParams.set("format", "json");
+  const r = await fetch(api, { headers: { accept: "application/json" } });
+  if (!r.ok) throw new Error(`Steam ${r.status}`);
+  const data = await r.json();
+  return (data?.appnews?.newsitems || []).slice(0, 5).map((n) => ({
+    title: n.title,
+    url: n.url,
+    date: new Date(n.date * 1000).toISOString(),
+  }));
 }
