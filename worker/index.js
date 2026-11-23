@@ -104,7 +104,6 @@ async function withKey(key) {
     players: s.players ?? 0,
     maxPlayers: s.max_players ?? null,
     name: s.name ?? null,
-    version: s.version ?? null, // game version the server is running
   };
 }
 
@@ -212,7 +211,8 @@ async function officialNews() {
   const data = await r.json();
   return (data?.appnews?.newsitems || []).slice(0, 5).map((n) => ({
     title: n.title,
-    url: n.url,
+    // Link to the normal Steam news page rather than Steam's image-server address
+    url: n.gid ? `https://store.steampowered.com/news/app/${ENSHROUDED_APPID}/view/${n.gid}` : n.url,
     date: new Date(n.date * 1000).toISOString(),
   }));
 }

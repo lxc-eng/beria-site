@@ -250,7 +250,6 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
     <div class="field"><small>Guest password</small><code id="pw"></code></div>
     <div><button id="copy" type="button">Copy address</button></div>
     <p class="note" id="copymsg" role="status">Friends and admins have their own passwords. Ask the host.</p>
-    <p class="note" id="srvversion" hidden>The server is running game version <b id="srvver"></b>. If you get a version mismatch, update Enshrouded in Steam.</p>
   </div>
 
   <div class="sec">
@@ -420,7 +419,6 @@ function showStatus(d){
   if (d && d.online === true) {
     el.setAttribute("data-state","online");
     t.textContent = (d.players != null && d.maxPlayers) ? "Online · " + d.players + "/" + d.maxPlayers + " players" : "Online";
-    if (d.version) { $("srvver").textContent = d.version; $("srvversion").hidden = false; }
   } else if (d && d.online === false) {
     el.setAttribute("data-state","offline");
     t.textContent = d.lastSeenOnline ? "Offline · last seen " + ago(d.lastSeenOnline) : "Offline";
