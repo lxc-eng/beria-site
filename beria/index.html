@@ -68,6 +68,7 @@ a{color:var(--lichen)}
   background:rgba(6,10,22,.6);border:1px solid rgba(255,255,255,.16);font:600 .95rem/1.2 var(--sans);opacity:1;text-shadow:none;
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .banner p.uptime[hidden]{display:none}
+.banner p.build #build-id{font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .uptime-label{color:#b8c6e0;font-weight:500}
 .bar{display:inline-grid;grid-template-columns:repeat(48,3px);gap:1px;height:.95rem}
 .bar i{border-radius:1px;background:rgba(143,162,196,.28)}
@@ -224,6 +225,7 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
         <span class="bar" id="uptime-bar" role="img" aria-label="Uptime over the last 24 hours"></span>
         <span id="uptime-pct"></span>
       </p>
+      <p class="uptime build" id="build" hidden><span class="uptime-label">Build</span><span id="build-id"></span></p>
     </div>
   </div>
 </header>
@@ -471,6 +473,17 @@ function showGame(d){
     li.appendChild(t); li.appendChild(a); ul.appendChild(li); any = true;
   });
   $("game").hidden = !any;
+  showBuilds(d.builds);
+}
+function showBuilds(b){
+  var el = $("build");
+  if (!b || !b.server) { el.hidden = true; return; }
+  $("build-id").textContent = b.server.id;
+  var tip = "Latest Enshrouded Dedicated Server build";
+  if (b.server.updated) tip += ", released " + new Date(b.server.updated).toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"});
+  if (b.game) tip += ". Latest game build: " + b.game.id + " (shown at the top of Kiln’s Play tab).";
+  el.title = tip;
+  el.hidden = false;
 }
 function loadStatus(){
   fetch("/api/status", {cache:"no-store"})

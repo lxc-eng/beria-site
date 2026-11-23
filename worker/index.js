@@ -161,10 +161,24 @@ async function historySummary(env, live) {
 }
 
 // ---------- Enshrouded news and global player count (no key needed) ----------
-//   GET /api/game  ->  { playingNow, news: [{ title, url, date }] }
+//   GET /api/game  ->  { playingNow, news: [{ title, url, date }],
+//                        builds: { game: {id, updated}, server: {id, updated} } }
 // Cached for 30 minutes: this changes slowly.
 
 const GAME_CACHE_SECONDS = 1800;
+const DEDICATED_SERVER_APPID = 2278520;
+
+// Latest public build numbers. Steam only gives these to publishers, so this
+// uses steamcmd.net, an unofficial mirror of Steam's app info. It shows the
+// newest build available, not necessarily the one Beria is running.
+async function latestBuild(appid) {
+  const r = await fetch(`https://api.steamcmd.net/v1/info/${appid}`, { headers: { accept: "application/json" } });
+  if (!r.ok) throw new Error(`steamcmd.net ${r.status}`);
+  const data = await r.json();
+  const pub = data?.data?.[appid]?.depots?.branches?.public;
+  if (!pub?.buildid) throw new Error("no build id");
+  return { id: String(pub.buildid), updated: pub.timeupdated ? new Date(Number(pub.timeupdated) * 1000).toISOString() : null };
+}
 
 async function game(request, ctx) {
   const cache = caches.default;
@@ -172,11 +186,13 @@ async function game(request, ctx) {
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
 
-  const [playingNow, news] = await Promise.all([
+  const [playingNow, news, game, server] = await Promise.all([
     playerCount().catch(() => null),
     officialNews().catch(() => null),
+    latestBuild(ENSHROUDED_APPID).catch(() => null),
+    latestBuild(DEDICATED_SERVER_APPID).catch(() => null),
   ]);
-  const body = { playingNow, news, checkedAt: new Date().toISOString() };
+  const body = { playingNow, news, builds: { game, server }, checkedAt: new Date().toISOString() };
   const res = new Response(JSON.stringify(body), {
     headers: {
       "content-type": "application/json; charset=utf-8",
