@@ -4,6 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Beria | Enshrouded Server</title>
+<meta name="description" content="Beria is a private, modded Enshrouded dedicated server. Install Kiln, enter the Beria code, switch the mods on, and join.">
+<meta name="theme-color" content="#0c1426">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<!-- Link preview card (Discord, Facebook, X, etc.) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Beria">
+<meta property="og:title" content="Beria · Enshrouded server">
+<meta property="og:description" content="A private, modded Enshrouded dedicated server. Install Kiln, enter the Beria code, switch the mods on, and join.">
+<meta property="og:url" content="https://beria.shroudberry.com/">
+<meta property="og:image" content="https://beria.shroudberry.com/img/social-card.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Four Enshrouded adventurers standing in a misty ruin at night">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -45,6 +61,32 @@ a{color:var(--lichen)}
 .banner .wrap{position:relative;z-index:1;width:100%;padding-bottom:1.75rem;padding-top:5rem}
 .banner h1{font:600 clamp(3rem,10vw,5.5rem)/1 var(--serif);letter-spacing:-.02em;margin:0;text-shadow:0 2px 18px rgba(0,0,0,.5)}
 .banner p{margin:.35rem 0 0;font:500 clamp(1.05rem,3vw,1.4rem) var(--sans);opacity:.92;text-shadow:0 1px 10px rgba(0,0,0,.6)}
+/* Status row in the banner: live status + 24-hour uptime */
+.statusrow{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;margin-top:.9rem}
+.statusrow p{margin:0!important}
+.banner p.uptime{display:inline-flex;align-items:center;gap:.6rem;padding:.38rem .9rem;border-radius:999px;
+  background:rgba(6,10,22,.6);border:1px solid rgba(255,255,255,.16);font:600 .95rem/1.2 var(--sans);opacity:1;text-shadow:none;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.banner p.uptime[hidden]{display:none}
+.uptime-label{color:#b8c6e0;font-weight:500}
+.bar{display:inline-grid;grid-template-columns:repeat(48,3px);gap:1px;height:.95rem}
+.bar i{border-radius:1px;background:rgba(143,162,196,.28)}
+.bar i.up{background:#5fd38a}.bar i.part{background:#e0b04f}.bar i.down{background:#e0685a}
+/* Layout: What's new sits in the right margin on wide screens */
+.layout{display:grid;grid-template-columns:1fr min(100%,62rem) 1fr}
+.layout > main{grid-column:2;width:100%}
+.newsbar{grid-column:3;align-self:start;position:sticky;top:4.5rem;margin:3rem 1.5rem 2rem 1.5rem;max-width:19rem;
+  background:rgba(20,31,56,.72);border:1px solid var(--line);border-radius:8px;padding:1.1rem 1.2rem}
+.newsbar h2{font-size:1.25rem;margin:0 0 .8rem}
+ul.news{list-style:none;margin:0;padding:0;display:grid;gap:.8rem}
+ul.news li{display:grid;gap:.15rem;padding-bottom:.8rem;border-bottom:1px solid var(--line);font-size:.93rem;line-height:1.45}
+ul.news li:last-child{border-bottom:0;padding-bottom:0}
+ul.news time{color:var(--ember);font-weight:600;font-size:.85rem;letter-spacing:.02em}
+/* Not enough margin: show What's new under the Home page instead */
+@media (max-width:95.99rem){
+  .newsbar{grid-column:2;position:static;margin:0 1.25rem 3rem;max-width:40rem}
+  body:not([data-view="home"]) .newsbar{display:none}
+}
 /* Live server status badge */
 .banner p.status{display:inline-flex;align-items:center;gap:.55rem;margin-top:.9rem;padding:.38rem .9rem .38rem .75rem;
   border-radius:999px;background:rgba(6,10,22,.6);border:1px solid rgba(255,255,255,.16);
@@ -160,12 +202,20 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
     <div data-v="home" style="background-image:url(img/keyart.jpg);background-position:50% 30%"></div>
     <div data-v="downloads" style="background-image:url(img/ruins.jpg);background-position:50% 40%"></div>
     <div data-v="mods" style="background-image:url(img/ambush.jpg);background-position:50% 35%"></div>
+    <div data-v="roles" style="background-image:url(img/hollow.jpg);background-position:50% 40%"></div>
     <div data-v="about" style="background-image:url(img/gate.jpg);background-position:50% 45%"></div>
   </div>
   <div class="wrap">
     <h1 id="srvname">Beria</h1>
     <p>An Enshrouded dedicated server</p>
-    <p class="status" id="status" data-state="checking" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="status-text">Checking server…</span></p>
+    <div class="statusrow">
+      <p class="status" id="status" data-state="checking" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="status-text">Checking server…</span></p>
+      <p class="uptime" id="uptime" hidden title="Server uptime over the last 24 hours, in 30-minute blocks (oldest on the left)">
+        <span class="uptime-label">24 h</span>
+        <span class="bar" id="uptime-bar" role="img" aria-label="Uptime over the last 24 hours"></span>
+        <span id="uptime-pct"></span>
+      </p>
+    </div>
   </div>
 </header>
 
@@ -174,10 +224,12 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
     <li><a href="#home">Home</a></li>
     <li><a href="#downloads">Downloads</a></li>
     <li><a href="#mods">Mods</a></li>
+    <li><a href="#roles">Roles</a></li>
     <li><a href="#about">About</a></li>
   </ul>
 </nav>
 
+<div class="layout">
 <main class="wrap">
 
 <section class="view" id="v-home" aria-labelledby="h-home">
@@ -198,22 +250,10 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
       <li><div><strong>Get the Beria mods</strong><span>In Kiln, click <b>Got a code?</b> under the Play button and enter <b class="ccode"></b>, then click <b>All on</b> to switch the mods on. Full steps are on the <a href="#downloads">Downloads</a> page.</span></div></li>
       <li><div><strong>Start the game</strong><span>Starting from Kiln is recommended, but starting from Steam works too.</span></div></li>
       <li><div><strong>Choose Join Game</strong><span>Pick Direct Connect and paste the server address.</span></div></li>
-      <li><div><strong>Enter your password</strong><span>Your password decides your role in the world.</span></div></li>
+      <li><div><strong>Enter your password</strong><span>Your password decides your role in the world. See <a href="#roles">Roles</a> for what each one can do.</span></div></li>
     </ol>
   </div>
 
-  <div class="sec">
-    <h2>Roles</h2>
-    <p class="sub">What each password lets you do.</p>
-    <div class="scroll"><table>
-      <thead><tr><th>Role</th><th>Edit world</th><th>Edit base</th><th>Extend base</th><th>Open inventories</th><th>Kick and ban</th></tr></thead>
-      <tbody>
-        <tr><th>Admin</th><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td></tr>
-        <tr><th>Friend</th><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">No</td></tr>
-        <tr><th>Guest</th><td class="y">Yes</td><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td></tr>
-        <tr><th>Visitor</th><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td></tr>
-      </tbody></table></div>
-  </div>
 </section>
 
 <section class="view" id="v-downloads" aria-labelledby="h-dl">
@@ -262,6 +302,19 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
   <div class="modlist" id="mods"></div>
 </section>
 
+<section class="view" id="v-roles" aria-labelledby="h-roles">
+  <h2 id="h-roles">Roles</h2>
+  <p class="sub">Your password decides your role in the world. Here’s what each one lets you do. Friends and admins have their own passwords: ask the host.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Role</th><th>Edit world</th><th>Edit base</th><th>Extend base</th><th>Open inventories</th><th>Kick and ban</th></tr></thead>
+      <tbody>
+        <tr><th>Admin</th><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td></tr>
+        <tr><th>Friend</th><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">No</td></tr>
+        <tr><th>Guest</th><td class="y">Yes</td><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td></tr>
+        <tr><th>Visitor</th><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td></tr>
+      </tbody></table></div>
+</section>
+
 <section class="view" id="v-about" aria-labelledby="h-about">
   <div class="art" aria-hidden="true" style="background-image:url(img/risen.jpg);background-position:42% 50%"></div>
   <h2 id="h-about">About Beria</h2>
@@ -278,6 +331,12 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
 
 </main>
 
+<aside class="newsbar" aria-labelledby="h-news">
+  <h2 id="h-news">What’s new</h2>
+  <ul class="news" id="news"></ul>
+</aside>
+</div>
+
 <footer><div class="wrap">Beria is a private fan-run server and is not affiliated with Keen Games.</div></footer>
 
 <script>
@@ -288,6 +347,12 @@ var CONFIG = {
   guestPassword: "beria",
   kilnUrl: "https://frostdev.io/kiln/download",     // link to the latest Kiln client build
   crucibleCode: "NWG8-SRMG",   // Crucible code for the mod pack
+  // Newest first. Add a line here to post an update on the Home page.
+  news: [
+    {date: "2026-11-23", text: "The banner now shows whether Beria is online and how many players are on, plus a 24-hour uptime bar."},
+    {date: "2026-11-22", text: "Install guide now covers switching the mods on in Kiln: click All on after entering the code."},
+    {date: "2026-11-22", text: "New Mods page listing everything running on the server, with links."}
+  ],
   mods: [
     {n: "Kiln", d: "Mod loader and permissions system.", url: "https://frostdev.io/kiln/download"},
     {n: "XHL-Kiln-Core", d: "Shared library the XHL mods below need. Keep it up to date.", url: "https://www.nexusmods.com/enshrouded/mods/377"},
@@ -310,6 +375,14 @@ function setLink(id, url){
   else { a.setAttribute("aria-disabled","true"); a.textContent = "Link coming soon"; a.addEventListener("click", function(e){ e.preventDefault(); }); }
 }
 setLink("kilnlink", CONFIG.kilnUrl);
+var nl = $("news");
+CONFIG.news.forEach(function(x){
+  var li = document.createElement("li");
+  var t = document.createElement("time"); t.dateTime = x.date;
+  t.textContent = new Date(x.date + "T12:00:00").toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"});
+  var p = document.createElement("span"); p.textContent = x.text;
+  li.appendChild(t); li.appendChild(p); nl.appendChild(li);
+});
 var ml = $("mods");
 CONFIG.mods.forEach(function(x){
   var d = document.createElement("div"); d.className = "mod";
@@ -323,13 +396,14 @@ CONFIG.mods.forEach(function(x){
   d.appendChild(b); d.appendChild(s); ml.appendChild(d);
 });
 
-var views = ["home","downloads","mods","about"];
+var views = ["home","downloads","mods","roles","about"];
 function route(){
   var h = (location.hash || "#home").slice(1);
   if (views.indexOf(h) < 0) h = "home";
   views.forEach(function(v){
     $("v-"+v).classList.toggle("on", v === h);
   });
+  document.body.setAttribute("data-view", h);
   document.querySelectorAll(".banner .bg div").forEach(function(d){
     d.classList.toggle("on", d.getAttribute("data-v") === h);
   });
@@ -349,10 +423,33 @@ function showStatus(d){
     el.setAttribute("data-state","online");
     t.textContent = (d.players != null && d.maxPlayers) ? "Online · " + d.players + "/" + d.maxPlayers + " players" : "Online";
   } else if (d && d.online === false) {
-    el.setAttribute("data-state","offline"); t.textContent = "Offline";
+    el.setAttribute("data-state","offline");
+    t.textContent = d.lastSeenOnline ? "Offline · last seen " + ago(d.lastSeenOnline) : "Offline";
   } else {
     el.setAttribute("data-state","unknown"); t.textContent = "Status unavailable";
   }
+  showUptime(d);
+}
+function ago(iso){
+  var m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
+  if (m < 2) return "just now";
+  if (m < 60) return m + " min ago";
+  var h = Math.round(m / 60);
+  if (h < 48) return h + " h ago";
+  return Math.round(h / 24) + " days ago";
+}
+function showUptime(d){
+  var box = $("uptime");
+  if (!d || !d.history24h || !d.samples24h) { box.hidden = true; return; }
+  var bar = $("uptime-bar"); bar.textContent = "";
+  d.history24h.forEach(function(v){
+    var i = document.createElement("i");
+    i.className = v === 1 ? "up" : v === 0 ? "down" : v === 0.5 ? "part" : "";
+    bar.appendChild(i);
+  });
+  // A few hours of data are needed before the percentage means much
+  $("uptime-pct").textContent = d.samples24h < 12 ? "collecting…" : d.uptime24h + "%";
+  box.hidden = false;
 }
 function loadStatus(){
   fetch("/api/status", {cache:"no-store"})

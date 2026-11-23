@@ -14,6 +14,13 @@
     { "pattern": "beria.shroudberry.com", "custom_domain": true }
   ],
   "workers_dev": true,
+  // Stores the server's status history (one sample every 5 minutes, last 24 hours)
+  "kv_namespaces": [
+    { "binding": "HISTORY", "id": "3824db572c2a4c4c8c771a23185c7aae" }
+  ],
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
   "observability": { "enabled": true }
   // Secret (set in the Cloudflare dashboard, never in this file): STEAM_API_KEY
 }

@@ -1,16 +1,22 @@
 // Beria site Worker.
 // Serves the static site from ./beria, plus one small API:
-//   GET /api/status  ->  { online, players, maxPlayers, name, checkedAt }
+//   GET /api/status  ->  { online, players, maxPlayers, name, checkedAt,
+//                          lastSeenOnline, uptime24h, samples24h, history24h }
 //
 // It asks Steam whether the Beria server is listed. With a Steam Web API key
 // (secret STEAM_API_KEY) it also gets the player count; without one it can
-// still tell online from offline. Results are cached for 60 seconds so
+// still tell online from offline. Live results are cached for 60 seconds so
 // visitors never hit Steam directly.
+//
+// Every 5 minutes a scheduled check saves a sample to the HISTORY KV store,
+// which powers "last seen online" and the 24-hour uptime bar.
 
 const SERVER_IP = "142.181.47.14";
 const SERVER_PORTS = [15636, 15637]; // game port and query port
-const CACHE_SECONDS = 60;
 const ENSHROUDED_APPID = 1203620;
+const CACHE_SECONDS = 60;
+const KEEP_HOURS = 24;
+const BUCKETS = 48; // 30-minute slots in the 24-hour bar
 
 export default {
   async fetch(request, env, ctx) {
@@ -18,7 +24,17 @@ export default {
     if (url.pathname === "/api/status") return status(request, env, ctx);
     return env.ASSETS.fetch(request);
   },
+
+  // Cron trigger (see wrangler.jsonc): record one sample.
+  async scheduled(event, env, ctx) {
+    if (!env.HISTORY) return;
+    let live;
+    try { live = await lookup(env); } catch { return; } // Steam didn't answer; don't record a guess
+    ctx.waitUntil(record(env, live, event.scheduledTime || Date.now()));
+  },
 };
+
+// ---------- live status ----------
 
 async function status(request, env, ctx) {
   const cache = caches.default;
@@ -26,21 +42,14 @@ async function status(request, env, ctx) {
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
 
-  const trace = [];
   let body;
   try {
-    body = env.STEAM_API_KEY ? await withKey(env.STEAM_API_KEY, trace) : null;
-    // If the detailed lookup can't find Beria, double-check with the simple one
-    // so a lookup quirk never shows the server as offline when it's up.
-    if (!body || !body.online) {
-      const simple = await withoutKey(trace);
-      if (!body || simple.online) body = simple;
-    }
+    body = await lookup(env);
   } catch (err) {
-    trace.push("error: " + String(err && err.message || err));
     body = { online: null, error: "Steam didn't answer" };
   }
   body.checkedAt = new Date().toISOString();
+  try { Object.assign(body, await historySummary(env, body)); } catch { /* history is optional */ }
 
   const res = new Response(JSON.stringify(body), {
     headers: {
@@ -50,6 +59,17 @@ async function status(request, env, ctx) {
   });
   if (body.online !== null) ctx.waitUntil(cache.put(cacheKey, res.clone()));
   return res;
+}
+
+async function lookup(env) {
+  let body = env.STEAM_API_KEY ? await withKey(env.STEAM_API_KEY) : null;
+  // If the detailed lookup can't find Beria, double-check with the simple one
+  // so a lookup quirk never shows the server as offline when it's up.
+  if (!body || !body.online) {
+    const simple = await withoutKey();
+    if (!body || simple.online) body = simple;
+  }
+  return body;
 }
 
 function portOf(addr) {
@@ -66,35 +86,28 @@ function pickBeria(servers) {
 }
 
 // Full details: name and player count. Needs a Steam Web API key.
-async function withKey(key, trace) {
-  // Steam only lists Beria when the filter includes Enshrouded's app ID (1203620).
-  const filters = [`\\appid\\${ENSHROUDED_APPID}\\gameaddr\\${SERVER_IP}`];
-  for (const filter of filters) {
-    const api = new URL("https://api.steampowered.com/IGameServersService/GetServerList/v1/");
-    api.searchParams.set("key", key);
-    api.searchParams.set("filter", filter);
-    api.searchParams.set("limit", "20");
-    const r = await fetch(api, { headers: { accept: "application/json" } });
-    if (!r.ok) { trace.push(`GetServerList ${filter}: HTTP ${r.status}`); continue; }
-    const data = await r.json();
-    const servers = data?.response?.servers || [];
-    trace.push(`GetServerList ${filter}: ` + JSON.stringify(servers.map((x) => ({ addr: x.addr, gameport: x.gameport, appid: x.appid, players: x.players, max: x.max_players }))));
-    const s = pickBeria(servers);
-    if (s) {
-      return {
-        online: true,
-        // Steam leaves out zero values, so a missing count means nobody is on
-        players: s.players ?? 0,
-        maxPlayers: s.max_players ?? null,
-        name: s.name ?? null,
-      };
-    }
-  }
-  return { online: false };
+// Steam only lists Beria when the filter includes Enshrouded's app ID.
+async function withKey(key) {
+  const api = new URL("https://api.steampowered.com/IGameServersService/GetServerList/v1/");
+  api.searchParams.set("key", key);
+  api.searchParams.set("filter", `\\appid\\${ENSHROUDED_APPID}\\gameaddr\\${SERVER_IP}`);
+  api.searchParams.set("limit", "20");
+  const r = await fetch(api, { headers: { accept: "application/json" } });
+  if (!r.ok) throw new Error(`Steam ${r.status}`);
+  const data = await r.json();
+  const s = pickBeria(data?.response?.servers);
+  if (!s) return { online: false };
+  return {
+    online: true,
+    // Steam leaves out zero values, so a missing count means nobody is on
+    players: s.players ?? 0,
+    maxPlayers: s.max_players ?? null,
+    name: s.name ?? null,
+  };
 }
 
 // Online/offline only. Works with no key.
-async function withoutKey(trace) {
+async function withoutKey() {
   const api = new URL("https://api.steampowered.com/ISteamApps/GetServersAtAddress/v1/");
   api.searchParams.set("addr", SERVER_IP);
   api.searchParams.set("format", "json");
@@ -102,7 +115,46 @@ async function withoutKey(trace) {
   if (!r.ok) throw new Error(`Steam ${r.status}`);
   const data = await r.json();
   if (!data?.response?.success) throw new Error("Steam lookup failed");
-  const servers = data.response.servers || [];
-  trace.push("GetServersAtAddress: " + JSON.stringify(servers.map((x) => ({ addr: x.addr, gameport: x.gameport, appid: x.appid }))));
-  return { online: Boolean(pickBeria(servers)), players: null, maxPlayers: null };
+  return { online: Boolean(pickBeria(data.response.servers)), players: null, maxPlayers: null };
+}
+
+// ---------- history ----------
+// One KV value: { samples: [[timeMs, 1|0, players|null], ...], lastOnline: ISO string }
+
+async function readHistory(env) {
+  if (!env.HISTORY) return null;
+  return (await env.HISTORY.get("history", "json")) || { samples: [], lastOnline: null };
+}
+
+async function record(env, live, now) {
+  const h = await readHistory(env);
+  const cutoff = now - KEEP_HOURS * 3600e3;
+  h.samples = h.samples.filter((s) => s[0] >= cutoff);
+  h.samples.push([now, live.online ? 1 : 0, live.players ?? null]);
+  if (live.online) h.lastOnline = new Date(now).toISOString();
+  await env.HISTORY.put("history", JSON.stringify(h));
+}
+
+async function historySummary(env, live) {
+  const h = await readHistory(env);
+  if (!h) return {};
+  const now = Date.now();
+  const start = now - KEEP_HOURS * 3600e3;
+  const size = (KEEP_HOURS * 3600e3) / BUCKETS;
+  const up = new Array(BUCKETS).fill(0);
+  const seen = new Array(BUCKETS).fill(0);
+  let online = 0, total = 0;
+  for (const [t, on] of h.samples) {
+    if (t < start) continue;
+    const i = Math.min(BUCKETS - 1, Math.floor((t - start) / size));
+    seen[i]++; up[i] += on; total++; online += on;
+  }
+  // Each slot: 1 = up the whole time, 0 = down, 0.5 = some of each, null = no data yet
+  const history24h = seen.map((n, i) => (n === 0 ? null : up[i] === n ? 1 : up[i] === 0 ? 0 : 0.5));
+  return {
+    lastSeenOnline: live.online ? new Date(now).toISOString() : h.lastOnline,
+    uptime24h: total ? Math.round((online / total) * 1000) / 10 : null,
+    samples24h: total,
+    history24h,
+  };
 }
