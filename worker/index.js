@@ -10,6 +10,7 @@
 const SERVER_IP = "142.181.47.14";
 const SERVER_PORTS = [15636, 15637]; // game port and query port
 const CACHE_SECONDS = 60;
+const ENSHROUDED_APPID = 1203620;
 
 export default {
   async fetch(request, env, ctx) {
@@ -20,14 +21,10 @@ export default {
 };
 
 async function status(request, env, ctx) {
-  const url = new URL(request.url);
-  const debug = url.searchParams.has("debug");
   const cache = caches.default;
   const cacheKey = new Request(new URL("/api/status", request.url).toString());
-  if (!debug) {
-    const cached = await cache.match(cacheKey);
-    if (cached) return cached;
-  }
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
 
   const trace = [];
   let body;
@@ -44,15 +41,14 @@ async function status(request, env, ctx) {
     body = { online: null, error: "Steam didn't answer" };
   }
   body.checkedAt = new Date().toISOString();
-  if (debug) body.trace = trace; // shows what Steam returned (never the key)
 
   const res = new Response(JSON.stringify(body), {
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "cache-control": debug ? "no-store" : `public, max-age=${CACHE_SECONDS}`,
+      "cache-control": `public, max-age=${CACHE_SECONDS}`,
     },
   });
-  if (!debug && body.online !== null) ctx.waitUntil(cache.put(cacheKey, res.clone()));
+  if (body.online !== null) ctx.waitUntil(cache.put(cacheKey, res.clone()));
   return res;
 }
 
@@ -70,13 +66,9 @@ function pickBeria(servers) {
 }
 
 // Full details: name and player count. Needs a Steam Web API key.
-// Tries a few filters, because Steam matches addresses differently per game.
 async function withKey(key, trace) {
-  const filters = [
-    `\\gameaddr\\${SERVER_IP}`,
-    ...SERVER_PORTS.map((p) => `\\addr\\${SERVER_IP}:${p}`),
-    `\\appid\\1203620\\gameaddr\\${SERVER_IP}`,
-  ];
+  // Steam only lists Beria when the filter includes Enshrouded's app ID (1203620).
+  const filters = [`\\appid\\${ENSHROUDED_APPID}\\gameaddr\\${SERVER_IP}`];
   for (const filter of filters) {
     const api = new URL("https://api.steampowered.com/IGameServersService/GetServerList/v1/");
     api.searchParams.set("key", key);
