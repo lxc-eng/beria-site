@@ -55,6 +55,7 @@ a{color:var(--lichen)}
   padding-top:env(safe-area-inset-top,0px);background:#0a1226}
 .banner .bg div{position:absolute;inset:0;background-size:cover;opacity:0;transition:opacity .7s ease}
 .banner .bg div.on{opacity:1}
+.banner .bg video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 35%}
 .banner.still .bg div{transition:none}
 @media (prefers-reduced-motion:reduce){.banner .bg div{transition:none}}
 .banner::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(6,10,22,.85),rgba(6,10,22,.15) 60%,rgba(6,10,22,0))}
@@ -209,7 +210,9 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.95rem;border-top:1px so
 
 <header class="banner still">
   <div class="bg" aria-hidden="true">
-    <div data-v="home" style="background-image:url(img/keyart.jpg);background-position:50% 30%"></div>
+    <div data-v="home" style="background-image:url(img/banner-home-poster.jpg);background-position:50% 35%">
+      <video id="homevid" src="img/banner-home.mp4" poster="img/banner-home-poster.jpg" muted loop playsinline preload="metadata"></video>
+    </div>
     <div data-v="downloads" style="background-image:url(img/ruins.jpg);background-position:50% 40%"></div>
     <div data-v="mods" style="background-image:url(img/ambush.jpg);background-position:50% 35%"></div>
     <div data-v="roles" style="background-image:url(img/hollow.jpg);background-position:50% 40%"></div>
@@ -406,6 +409,13 @@ function route(){
   document.querySelectorAll(".banner .bg div").forEach(function(d){
     d.classList.toggle("on", d.getAttribute("data-v") === h);
   });
+  // Home banner video: play only while Home is showing, and never for visitors who prefer less motion
+  var vid = $("homevid");
+  if (vid) {
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (h === "home" && !still) { var p = vid.play(); if (p && p.catch) p.catch(function(){}); }
+    else vid.pause();
+  }
   document.querySelectorAll("nav a").forEach(function(a){
     if (a.getAttribute("href") === "#"+h) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
   });
