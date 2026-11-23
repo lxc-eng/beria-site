@@ -20,26 +20,39 @@ export default {
 };
 
 async function status(request, env, ctx) {
+  const url = new URL(request.url);
+  const debug = url.searchParams.has("debug");
   const cache = caches.default;
   const cacheKey = new Request(new URL("/api/status", request.url).toString());
-  const cached = await cache.match(cacheKey);
-  if (cached) return cached;
+  if (!debug) {
+    const cached = await cache.match(cacheKey);
+    if (cached) return cached;
+  }
 
+  const trace = [];
   let body;
   try {
-    body = env.STEAM_API_KEY ? await withKey(env.STEAM_API_KEY) : await withoutKey();
+    body = env.STEAM_API_KEY ? await withKey(env.STEAM_API_KEY, trace) : null;
+    // If the detailed lookup can't find Beria, double-check with the simple one
+    // so a lookup quirk never shows the server as offline when it's up.
+    if (!body || !body.online) {
+      const simple = await withoutKey(trace);
+      if (!body || simple.online) body = simple;
+    }
   } catch (err) {
+    trace.push("error: " + String(err && err.message || err));
     body = { online: null, error: "Steam didn't answer" };
   }
   body.checkedAt = new Date().toISOString();
+  if (debug) body.trace = trace; // shows what Steam returned (never the key)
 
   const res = new Response(JSON.stringify(body), {
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "cache-control": `public, max-age=${CACHE_SECONDS}`,
+      "cache-control": debug ? "no-store" : `public, max-age=${CACHE_SECONDS}`,
     },
   });
-  if (body.online !== null) ctx.waitUntil(cache.put(cacheKey, res.clone()));
+  if (!debug && body.online !== null) ctx.waitUntil(cache.put(cacheKey, res.clone()));
   return res;
 }
 
@@ -57,26 +70,39 @@ function pickBeria(servers) {
 }
 
 // Full details: name and player count. Needs a Steam Web API key.
-async function withKey(key) {
-  const api = new URL("https://api.steampowered.com/IGameServersService/GetServerList/v1/");
-  api.searchParams.set("key", key);
-  api.searchParams.set("filter", `\\gameaddr\\${SERVER_IP}`);
-  api.searchParams.set("limit", "20");
-  const r = await fetch(api, { headers: { accept: "application/json" } });
-  if (!r.ok) throw new Error(`Steam ${r.status}`);
-  const data = await r.json();
-  const s = pickBeria(data?.response?.servers);
-  if (!s) return { online: false };
-  return {
-    online: true,
-    players: s.players ?? null,
-    maxPlayers: s.max_players ?? null,
-    name: s.name ?? null,
-  };
+// Tries a few filters, because Steam matches addresses differently per game.
+async function withKey(key, trace) {
+  const filters = [
+    `\\gameaddr\\${SERVER_IP}`,
+    ...SERVER_PORTS.map((p) => `\\addr\\${SERVER_IP}:${p}`),
+    `\\appid\\1203620\\gameaddr\\${SERVER_IP}`,
+  ];
+  for (const filter of filters) {
+    const api = new URL("https://api.steampowered.com/IGameServersService/GetServerList/v1/");
+    api.searchParams.set("key", key);
+    api.searchParams.set("filter", filter);
+    api.searchParams.set("limit", "20");
+    const r = await fetch(api, { headers: { accept: "application/json" } });
+    if (!r.ok) { trace.push(`GetServerList ${filter}: HTTP ${r.status}`); continue; }
+    const data = await r.json();
+    const servers = data?.response?.servers || [];
+    trace.push(`GetServerList ${filter}: ` + JSON.stringify(servers.map((x) => ({ addr: x.addr, gameport: x.gameport, appid: x.appid, players: x.players, max: x.max_players }))));
+    const s = pickBeria(servers);
+    if (s) {
+      return {
+        online: true,
+        // Steam leaves out zero values, so a missing count means nobody is on
+        players: s.players ?? 0,
+        maxPlayers: s.max_players ?? null,
+        name: s.name ?? null,
+      };
+    }
+  }
+  return { online: false };
 }
 
 // Online/offline only. Works with no key.
-async function withoutKey() {
+async function withoutKey(trace) {
   const api = new URL("https://api.steampowered.com/ISteamApps/GetServersAtAddress/v1/");
   api.searchParams.set("addr", SERVER_IP);
   api.searchParams.set("format", "json");
@@ -84,5 +110,7 @@ async function withoutKey() {
   if (!r.ok) throw new Error(`Steam ${r.status}`);
   const data = await r.json();
   if (!data?.response?.success) throw new Error("Steam lookup failed");
-  return { online: Boolean(pickBeria(data.response.servers)), players: null, maxPlayers: null };
+  const servers = data.response.servers || [];
+  trace.push("GetServersAtAddress: " + JSON.stringify(servers.map((x) => ({ addr: x.addr, gameport: x.gameport, appid: x.appid }))));
+  return { online: Boolean(pickBeria(servers)), players: null, maxPlayers: null };
 }
