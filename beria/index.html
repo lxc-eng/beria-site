@@ -212,6 +212,17 @@ ul.rules li::before{content:"";position:absolute;left:0;top:.7em;width:.55rem;he
   -webkit-mask-image:var(--beam);mask-image:var(--beam);
   -webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
 .view > .art{display:none} /* replaced by the fixed page backdrop */
+/* Live map: the map page from the server, framed in a panel; the page grows wider while it shows */
+body[data-view="map"] .layout{grid-template-columns:1fr min(100%,92rem) 1fr}
+body[data-view="map"] .layout > main.wrap{max-width:92rem}
+.mapframe{position:relative;margin-top:1.25rem;height:min(78vh,54rem);min-height:24rem;border:1px solid var(--line);
+  border-radius:8px;overflow:hidden;background:var(--bg)}
+.mapframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.mapframe .mapmsg{position:absolute;inset:0;display:grid;place-content:center;gap:.4rem;text-align:center;padding:2rem;color:var(--muted)}
+.mapframe .mapmsg b{font:600 1.25rem var(--serif);color:var(--ink)}
+.mapframe .mapmsg[hidden]{display:none}
+.maptools{display:flex;flex-wrap:wrap;gap:.75rem 1.25rem;align-items:center;margin-top:1rem}
+.maptools .note{margin:0}
 footer{padding:1.5rem 0 2rem;color:var(--muted);font-size:.95rem;border-top:1px solid rgba(126,166,242,.28);background:rgba(8,12,26,.88)}
 </style>
 </head>
@@ -223,6 +234,7 @@ footer{padding:1.5rem 0 2rem;color:var(--muted);font-size:.95rem;border-top:1px 
       <video id="homevid" src="img/banner-home.mp4" poster="img/banner-home-poster.jpg" muted loop playsinline preload="metadata"></video>
     </div>
     <div data-v="downloads" style="background-image:url(img/ruins.jpg);background-position:50% 40%"></div>
+    <div data-v="map" style="background-image:url(img/ruins.jpg);background-position:50% 55%"></div>
     <div data-v="mods" style="background-image:url(img/ambush.jpg);background-position:50% 35%"></div>
     <div data-v="roles" style="background-image:url(img/hollow.jpg);background-position:50% 40%"></div>
     <div data-v="about" style="background-image:url(img/gate.jpg);background-position:50% 45%"></div>
@@ -245,6 +257,7 @@ footer{padding:1.5rem 0 2rem;color:var(--muted);font-size:.95rem;border-top:1px 
 <nav aria-label="Main">
   <ul>
     <li><a href="#home">Home</a></li>
+    <li><a href="#map">Map</a></li>
     <li><a href="#downloads">Downloads</a></li>
     <li><a href="#mods">Mods</a></li>
     <li><a href="#roles">Roles</a></li>
@@ -277,6 +290,19 @@ footer{padding:1.5rem 0 2rem;color:var(--muted);font-size:.95rem;border-top:1px 
     </ol>
   </div>
 
+</section>
+
+<section class="view" id="v-map" aria-labelledby="h-map">
+  <h2 id="h-map">Live map</h2>
+  <p class="sub">Who’s online, every flame altar and the regions of Embervale, live from the server. Use <b>Map Filter</b> to show shrines, chests and more.</p>
+  <div class="mapframe">
+    <iframe id="mapframe" title="Beria live map" allow="fullscreen" referrerpolicy="no-referrer" hidden></iframe>
+    <div class="mapmsg" id="mapmsg"><b>Loading the map…</b><span></span></div>
+  </div>
+  <div class="maptools">
+    <a class="btn" id="mapfull" target="_blank" rel="noopener">Open full screen</a>
+    <p class="note">The map runs on the server PC, so it’s only up while the server is.</p>
+  </div>
 </section>
 
 <section class="view" id="v-downloads" aria-labelledby="h-dl">
@@ -371,6 +397,7 @@ var CONFIG = {
   guestPassword: "beria",
   kilnUrl: "https://frostdev.io/kiln/download",     // link to the latest Kiln client build
   crucibleCode: "NWG8-SRMG",   // Crucible code for the mod pack
+  mapUrl: "https://map.shroudberry.com/",   // the live map's address (its Cloudflare Tunnel hostname), for example https://map.shroudberry.com/
   mods: [
     {n: "Kiln", d: "Mod loader and permissions system.", url: "https://frostdev.io/kiln/download"},
     {n: "XHL-Kiln-Core", d: "Shared library the XHL mods below need. Keep it up to date.", url: "https://www.nexusmods.com/enshrouded/mods/377"},
@@ -407,7 +434,7 @@ CONFIG.mods.forEach(function(x){
   d.appendChild(b); d.appendChild(s); ml.appendChild(d);
 });
 
-var views = ["home","downloads","mods","roles","about"];
+var views = ["home","map","downloads","mods","roles","about"];
 function route(){
   var h = (location.hash || "#home").slice(1);
   if (views.indexOf(h) < 0) h = "home";
@@ -428,7 +455,31 @@ function route(){
   document.querySelectorAll("nav a").forEach(function(a){
     if (a.getAttribute("href") === "#"+h) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
   });
+  if (h === "map") openMap();
   window.scrollTo(0, 0);
+}
+
+// Live map: loaded the first time the Map tab opens. It checks the server answers first, so an offline
+// server shows a message here instead of an error page inside the frame, and tries again every 30 s.
+var mapTimer = null;
+function mapMessage(title, text){
+  var m = $("mapmsg"); m.hidden = false;
+  m.querySelector("b").textContent = title; m.querySelector("span").textContent = text || "";
+}
+function openMap(){
+  var f = $("mapframe");
+  if (!CONFIG.mapUrl) { mapMessage("Coming soon", "The live map will appear here."); $("mapfull").setAttribute("aria-disabled","true"); return; }
+  $("mapfull").href = CONFIG.mapUrl;
+  if (f.getAttribute("src")) return;
+  var base = CONFIG.mapUrl.replace(/\/?$/, "/");
+  fetch(base + "api/state", {cache:"no-store"}).then(function(r){
+    if (!r.ok) throw new Error(r.status);
+    f.src = base; f.hidden = false; $("mapmsg").hidden = true;
+    clearTimeout(mapTimer);
+  }).catch(function(){
+    mapMessage("The map is offline", "It comes back when the server does. Trying again in a moment…");
+    clearTimeout(mapTimer); mapTimer = setTimeout(openMap, 30000);
+  });
 }
 window.addEventListener("hashchange", route);
 route();
